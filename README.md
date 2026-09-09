@@ -17,13 +17,13 @@ These are GitHub forks, so upstream history and ownership remain visible at the 
 
 ## Current catalog snapshot
 
-- 350 total resources: 311 GitHub-hosted files and 39 curated external sources
-- 301 IELTS resources, including the hosted archive and current official Cambridge/IELTS.org entries
+- 389 total resources: 350 GitHub-hosted files and 39 curated external sources
+- 340 IELTS resources, including the hosted archive and current official Cambridge/IELTS.org entries
 - 40 GRE resources, including official ETS practice, Quant review, POWERPREP, and video indexes
 - 9 GMAT resources, including official GMAC entries, question banks, and current free video courses
 - Cambridge IELTS volumes 1–21 are indexed in the interface
-- Complete book/audio files are currently present for Cambridge 4–18
-- Cambridge 19–21 contain verified official product and preview records but are not labelled as hosted
+- Complete book/audio files are currently present for Cambridge 4–21
+- Cambridge 19–21 Academic books and listening assets are hosted in Kitkitkittt/IELTS alongside verified official product and preview records
 - Cambridge 1–3 remain missing because neither hosted files nor curated external records are present
 
 The catalog distinguishes `hosted`, `public_official`, `licensed`, and `third_party_free` access. A downloadable official URL is not treated as permission to mirror it. Full commercial CAM19–21 payloads must not be committed without a written redistribution grant.
@@ -56,7 +56,7 @@ npm run dev
 
 ### Private local library
 
-This local-only branch can serve sibling material clones without uploading their files. Keep the five repositories together in one directory, import the user-supplied CAM19–21 files, and start the loopback-only server:
+The repo can also serve sibling material clones locally without uploading their files. Keep the five repositories together in one directory, import the user-supplied CAM19–21 files, and start the loopback-only server:
 
 ```bash
 npm run local:import -- --source /absolute/path/to/cam19-20

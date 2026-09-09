@@ -124,13 +124,20 @@ function audioDetails(path) {
 
 function ieltsMaterials(tree, repo) {
   const accepted = tree.filter((item) =>
-    /^(IELTS 整体介绍&考试内容\.md|IELTS16_体验版\.pdf|剑桥雅思真题\d+\.pdf|雅思真题音频\/|雅思作文案例\/|雅思作文资料\/|雅思听力资料\/)/.test(item.path),
+    /^(IELTS 整体介绍&考试内容\.md|IELTS16_体验版\.pdf|剑桥雅思真题\d+\.pdf|雅思真题音频\/|雅思作文案例\/|雅思作文资料\/|雅思听力资料\/|Cambridge IELTS\/Volume (19|20|21)\/)/.test(item.path) &&
+    item.path !== "Cambridge IELTS/local-library-manifest.json",
   );
   return accepted.map((item) => {
     const book = item.path.match(/^剑桥雅思真题(\d+)\.pdf$/);
     const audioVolume = item.path.match(/^雅思真题音频\/(\d+)-剑桥雅思(\d+)\//);
-    const volume = book ? Number(book[1]) : audioVolume ? Number(audioVolume[2]) : item.path === "IELTS16_体验版.pdf" ? 16 : null;
+    const newBook = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Practice Book\/.*\.pdf$/);
+    const newAudioPart = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Listening\/Test (\d+)\/Part (\d+)\.(mp3|m4a|wav|ogg)$/);
+    const newAudioComplete = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Listening\/Test (\d+)\/Complete Listening Test\.mp3$/);
+    const volume = book ? Number(book[1]) : audioVolume ? Number(audioVolume[2]) : newBook ? Number(newBook[1]) : newAudioPart ? Number(newAudioPart[1]) : newAudioComplete ? Number(newAudioComplete[1]) : item.path === "IELTS16_体验版.pdf" ? 16 : null;
     if (book) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", collection: "cambridge", volume, variant: "academic", role: "practice_book", publisher: "Cambridge University Press & Assessment" });
+    if (newBook) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", collection: "cambridge", volume, variant: "academic", role: "practice_book", publisher: "Cambridge University Press & Assessment" });
+    if (newAudioPart) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Test ${newAudioPart[2]} · Part ${newAudioPart[3]}`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: Number(newAudioPart[2]), part: Number(newAudioPart[3]), role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
+    if (newAudioComplete) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Test ${newAudioComplete[2]} · Complete Listening`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: Number(newAudioComplete[2]), part: null, role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
     if (audioVolume) {
       const audio = audioDetails(item.path);
       return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — ${audio.label}`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: audio.test, part: audio.part, role: "listening_audio", publisher: "Cambridge University Press & Assessment" });

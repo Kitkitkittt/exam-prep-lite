@@ -7,7 +7,7 @@
     "ielts_source_repo": "Kitkitkittt/IELTS",
     "gre_source_repo": "Kitkitkittt/GRE-CN",
     "gmat_source_repo": "Kitkitkittt/gmat.site",
-    "ielts_current_cambridge_coverage": "Full book files and listening assets indexed only through Cambridge IELTS 18; Cambridge 19/20/21 are missing.",
+    "ielts_current_cambridge_coverage": "Full Academic book files and listening assets hosted through Cambridge IELTS 21 (Volumes 19/20/21 in Cambridge IELTS/Volume layout); Cambridge 19/20/21 licensed product/preview records retained as external entries.",
     "important_pipeline_note": "The existing snapshot-materials.mjs only discovers files from GitHub trees. Add a curated external-source manifest and merge it with tree-derived entries."
   },
   "policy": {

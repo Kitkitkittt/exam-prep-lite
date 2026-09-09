@@ -31,9 +31,9 @@ test("curated records retain external-source policy and verification metadata", 
 test("Cambridge editions distinguish hosted, official, and missing states", () => {
   assert.deepEqual(catalog.volumes.map((item) => item.volume), Array.from({ length: 21 }, (_, index) => index + 1));
   assert.deepEqual(catalog.volumes.filter((item) => item.status === "missing").map((item) => item.volume), [1, 2, 3]);
-  assert.deepEqual(catalog.volumes.filter((item) => item.status === "hosted").map((item) => item.volume), [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
-  assert.deepEqual(catalog.volumes.filter((item) => item.status === "official").map((item) => item.volume), [19, 20, 21]);
-  assert.equal(catalog.materials.some((item) => item.exam === "ielts" && item.volume >= 19 && item.access === "hosted"), false);
+  assert.deepEqual(catalog.volumes.filter((item) => item.status === "hosted").map((item) => item.volume), [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]);
+  assert.deepEqual(catalog.volumes.filter((item) => item.status === "official").map((item) => item.volume), []);
+  assert.equal(catalog.materials.some((item) => item.exam === "ielts" && item.volume >= 19 && item.access === "hosted"), true);
 });
 
 test("catalog includes current IELTS, GRE, and GMAT source layers", () => {
@@ -50,6 +50,19 @@ test("hosted Cambridge audio is grouped by test and part metadata", () => {
   assert.equal(cam18Audio.length, 16);
   assert.deepEqual([...new Set(cam18Audio.map((item) => item.test))], [1, 2, 3, 4]);
   assert.deepEqual([...new Set(cam18Audio.map((item) => item.part))], [1, 2, 3, 4]);
+  const cam19Audio = catalog.materials.filter((item) => item.volume === 19 && item.role === "listening_audio");
+  assert.equal(cam19Audio.length, 16);
+  assert.deepEqual([...new Set(cam19Audio.map((item) => item.test))], [1, 2, 3, 4]);
+  const cam20Audio = catalog.materials.filter((item) => item.volume === 20 && item.role === "listening_audio");
+  assert.equal(cam20Audio.length, 16);
+  const cam21Audio = catalog.materials.filter((item) => item.volume === 21 && item.role === "listening_audio");
+  assert.equal(cam21Audio.length, 4);
+  const cam19Book = catalog.materials.filter((item) => item.volume === 19 && item.role === "practice_book" && item.access === "hosted");
+  const cam20Book = catalog.materials.filter((item) => item.volume === 20 && item.role === "practice_book" && item.access === "hosted");
+  const cam21Book = catalog.materials.filter((item) => item.volume === 21 && item.role === "practice_book" && item.access === "hosted");
+  assert.equal(cam19Book.length, 1);
+  assert.equal(cam20Book.length, 1);
+  assert.equal(cam21Book.length, 1);
 });
 
 test("visible titles are English and regular hosted files respect GitHub limits", () => {
