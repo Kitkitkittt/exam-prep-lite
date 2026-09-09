@@ -101,7 +101,8 @@ function fileGlyph(kind) {
 }
 
 function accessBadge(material) {
-  return `<span class="access-badge access-${material.access}">${accessLabels[material.access] || material.access}</span>`;
+  const label = material.location === "local" ? "Private local" : accessLabels[material.access] || material.access;
+  return `<span class="access-badge access-${material.access}">${label}</span>`;
 }
 
 function selectedMaterial() {
@@ -254,7 +255,7 @@ function previewPanel() {
       </section>
     `;
   }
-  const primaryLabel = material.location === "github" ? "Open raw" : material.access === "licensed" ? "Open licensed source" : "Open official source";
+  const primaryLabel = material.location === "local" ? "Open local file" : material.location === "github" ? "Open raw" : material.access === "licensed" ? "Open licensed source" : "Open official source";
   return `
     <section class="preview-panel">
       <header class="preview-header">
@@ -268,7 +269,7 @@ function previewPanel() {
         </div>
       </header>
       <div class="preview-body">${previewMarkup(material)}</div>
-      <footer class="preview-footer"><span><i></i>${material.location === "github" ? "Hosted in your GitHub repository" : `${accessLabels[material.access]} external source`}</span><code>${escapeHtml(material.publisher || "Source")}</code></footer>
+      <footer class="preview-footer"><span><i></i>${material.location === "local" ? "Private file in your local repository" : material.location === "github" ? "Hosted in your GitHub repository" : `${accessLabels[material.access]} external source`}</span><code>${escapeHtml(material.publisher || "Source")}</code></footer>
     </section>
   `;
 }
@@ -297,7 +298,7 @@ function previewMarkup(material) {
         ${material.variant ? `<div><dt>Variant</dt><dd>${escapeHtml(material.variant.replaceAll("_", " "))}</dd></div>` : ""}
         ${material.year ? `<div><dt>Edition year</dt><dd>${material.year}</dd></div>` : ""}
         ${material.isbn ? `<div><dt>ISBN</dt><dd>${escapeHtml(material.isbn)}</dd></div>` : ""}
-        <div><dt>Access</dt><dd>${escapeHtml(accessLabels[material.access] || material.access)}</dd></div>
+        <div><dt>Access</dt><dd>${escapeHtml(material.location === "local" ? "Private local" : accessLabels[material.access] || material.access)}</dd></div>
       </dl>
       <a class="primary-action" href="${material.url}" target="_blank" rel="noreferrer">Open source</a>
     </div>`;
@@ -482,7 +483,7 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-fetch("./catalog.json")
+fetch(import.meta.env.VITE_CATALOG_FILE || "./catalog.json")
   .then((response) => {
     if (!response.ok) throw new Error(`Catalog request failed with ${response.status}`);
     return response.json();

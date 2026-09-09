@@ -54,6 +54,18 @@ npm install
 npm run dev
 ```
 
+### Private local library
+
+This local-only branch can serve sibling material clones without uploading their files. Keep the five repositories together in one directory, import the user-supplied CAM19–21 files, and start the loopback-only server:
+
+```bash
+npm run local:import -- --source /absolute/path/to/cam19-20
+npm run check:local
+npm run dev:local
+```
+
+Open the printed `127.0.0.1` address. `dev:local` creates an ignored `public/catalog.local.json`, labels repository files as private local material, and serves them directly from the sibling clones. This mode is intentionally unsuitable for GitHub Pages or any public host.
+
 ## Source registry and catalog refresh
 
 The curated registry lives in `sources/official.json`. It records source ownership, resource type, access state, mirroring policy, edition metadata, and verification date. The committed `public/catalog.json` merges that registry with the current GitHub repository trees, keeping visitor browsers independent of the GitHub API.

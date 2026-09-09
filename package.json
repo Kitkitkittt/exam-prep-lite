@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:local": "npm run local:catalog && VITE_CATALOG_FILE=./catalog.local.json EXAM_PREP_LOCAL=1 vite --host 127.0.0.1",
     "catalog": "node scripts/snapshot-materials.mjs",
+    "local:import": "node scripts/import-local-cambridge.mjs",
+    "local:catalog": "node scripts/snapshot-local-materials.mjs",
+    "check:local": "npm run local:catalog && node scripts/check-local-library.mjs && npm run test && npm run build",
     "check:sources": "node scripts/check-sources.mjs --live",
     "validate:sources": "node scripts/check-sources.mjs",
     "build": "vite build",
