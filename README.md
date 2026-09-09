@@ -8,7 +8,7 @@ A simple English material browser for IELTS, GRE, and GMAT. The GitHub Pages app
 
 | Exam | Repository | Indexed content |
 | --- | --- | --- |
-| IELTS | [Kitkitkittt/IELTS](https://github.com/Kitkitkittt/IELTS) | Cambridge books and audio, writing references, listening guides |
+| IELTS | [Kitkitkittt/IELTS](https://github.com/Kitkitkittt/IELTS) | Cambridge books and audio (English-only `Cambridge IELTS/Volume XX` layout), writing references, listening guides |
 | IELTS practice source | [Kitkitkittt/IELTS-practice](https://github.com/Kitkitkittt/IELTS-practice) | Static practice engine and vocabulary source |
 | GRE | [Kitkitkittt/GRE-CN](https://github.com/Kitkitkittt/GRE-CN) | Vocabulary datasets, PDFs, spreadsheets, reading collection |
 | GMAT | [Kitkitkittt/gmat.site](https://github.com/Kitkitkittt/gmat.site) | Demonstration and 100-question JSON banks |

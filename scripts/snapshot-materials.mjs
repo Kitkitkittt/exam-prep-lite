@@ -73,32 +73,36 @@ function makeMaterial(exam, repo, item, details) {
   };
 }
 
-const ieltsNameMap = new Map([
-  ["IELTS 整体介绍&考试内容", "IELTS exam overview and format"],
-  ["IELTS16_体验版", "Cambridge IELTS 16 — Trial edition"],
-  ["加拿大毕业生图", "Canadian graduates chart"],
-  ["港口对比图", "Port comparison diagram"],
-  ["社交中心活动图", "Social centre activities chart"],
-  ["英国快餐消费图", "UK fast-food consumption chart"],
-  ["折线图范文", "Line graph model answer"],
-  ["港口变化对比-剑桥19", "Port changes comparison — Cambridge 19"],
-  ["社交中心活动参与-剑桥19", "Social centre participation — Cambridge 19"],
-  ["2022年1-4月大作文真题范文", "Task 2 model answers — January to April 2022"],
-  ["7周突破雅思写作7分-杨凡", "Seven weeks to IELTS Writing Band 7"],
-  ["Ideas-for-IELTS-Topics", "Ideas for IELTS topics"],
-  ["剑桥图表题大全", "Cambridge chart-question collection"],
-  ["剑桥雅思写作高分范文", "High-scoring Cambridge IELTS writing samples"],
-  ["过雅思写作6.5", "Path to IELTS Writing Band 6.5"],
-  ["雅思写作7分288词", "Band 7 writing sample — 288 words"],
-  ["雅思写作7范文", "IELTS Band 7 model essays"],
-  ["雅思写作真经", "IELTS Writing master guide"],
-  ["雅思写作词汇", "IELTS Writing vocabulary"],
-  ["黑眼睛雅思写作教程", "IELTS Writing tutorial"],
-  ["4周攻克雅思听力", "Four weeks to IELTS Listening"],
-  ["剑桥雅思听力考点词", "Cambridge IELTS Listening key vocabulary"],
-  ["雅思听力词汇小伴侣", "IELTS Listening vocabulary companion"],
-  ["雅思词汇精讲-听力", "IELTS vocabulary focus — Listening"],
+const ieltsEnglishTitles = new Map([
+  ["ielts-exam-overview", "IELTS exam overview and format"],
+  ["ielts-16-trial-edition", "Cambridge IELTS 16 — Trial edition"],
+  ["canadian-graduates-chart", "Canadian graduates chart"],
+  ["port-comparison-diagram", "Port comparison diagram"],
+  ["social-centre-activities-chart", "Social centre activities chart"],
+  ["uk-fast-food-consumption-chart", "UK fast-food consumption chart"],
+  ["line-graph-model-answer", "Line graph model answer"],
+  ["port-harbour-changes-cambridge-19", "Port changes comparison — Cambridge 19"],
+  ["social-centre-participation-cambridge-19", "Social centre participation — Cambridge 19"],
+  ["task2-model-answers-jan-apr-2022", "Task 2 model answers — January to April 2022"],
+  ["seven-weeks-to-writing-band-7", "Seven weeks to IELTS Writing Band 7"],
+  ["ideas-for-ielts-topics", "Ideas for IELTS topics"],
+  ["cambridge-chart-questions-collection", "Cambridge chart-question collection"],
+  ["high-scoring-writing-samples", "High-scoring Cambridge IELTS writing samples"],
+  ["path-to-writing-band-6-5", "Path to IELTS Writing Band 6.5"],
+  ["band-7-writing-sample-288-words", "Band 7 writing sample — 288 words"],
+  ["band-7-model-essays", "IELTS Band 7 model essays"],
+  ["writing-master-guide", "IELTS Writing master guide"],
+  ["writing-vocabulary", "IELTS Writing vocabulary"],
+  ["ielts-writing-tutorial", "IELTS Writing tutorial"],
+  ["four-weeks-to-listening", "Four weeks to IELTS Listening"],
+  ["listening-key-vocabulary", "Cambridge IELTS Listening key vocabulary"],
+  ["listening-vocabulary-companion", "IELTS Listening vocabulary companion"],
+  ["vocabulary-focus-listening", "IELTS vocabulary focus — Listening"],
 ]);
+
+function humanize(name) {
+  return name.replaceAll("-", " ").replaceAll("_", " ").replace(/\s+/g, " ").trim().replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function baseName(path) {
   return path.split("/").pop().replace(/\.[^.]+$/, "");
@@ -124,27 +128,20 @@ function audioDetails(path) {
 
 function ieltsMaterials(tree, repo) {
   const accepted = tree.filter((item) =>
-    /^(IELTS 整体介绍&考试内容\.md|IELTS16_体验版\.pdf|剑桥雅思真题\d+\.pdf|雅思真题音频\/|雅思作文案例\/|雅思作文资料\/|雅思听力资料\/|Cambridge IELTS\/Volume (19|20|21)\/)/.test(item.path) &&
+    /^(guides\/|Cambridge IELTS\/Volume \d+\/|writing\/|listening\/)/.test(item.path) &&
     item.path !== "Cambridge IELTS/local-library-manifest.json",
   );
   return accepted.map((item) => {
-    const book = item.path.match(/^剑桥雅思真题(\d+)\.pdf$/);
-    const audioVolume = item.path.match(/^雅思真题音频\/(\d+)-剑桥雅思(\d+)\//);
     const newBook = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Practice Book\/.*\.pdf$/);
     const newAudioPart = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Listening\/Test (\d+)\/Part (\d+)\.(mp3|m4a|wav|ogg)$/);
     const newAudioComplete = item.path.match(/^Cambridge IELTS\/Volume (\d+)\/Academic\/Listening\/Test (\d+)\/Complete Listening Test\.mp3$/);
-    const volume = book ? Number(book[1]) : audioVolume ? Number(audioVolume[2]) : newBook ? Number(newBook[1]) : newAudioPart ? Number(newAudioPart[1]) : newAudioComplete ? Number(newAudioComplete[1]) : item.path === "IELTS16_体验版.pdf" ? 16 : null;
-    if (book) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", collection: "cambridge", volume, variant: "academic", role: "practice_book", publisher: "Cambridge University Press & Assessment" });
+    const volume = newBook ? Number(newBook[1]) : newAudioPart ? Number(newAudioPart[1]) : newAudioComplete ? Number(newAudioComplete[1]) : item.path === "guides/ielts-16-trial-edition.pdf" ? 16 : null;
     if (newBook) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", collection: "cambridge", volume, variant: "academic", role: "practice_book", publisher: "Cambridge University Press & Assessment" });
     if (newAudioPart) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Test ${newAudioPart[2]} · Part ${newAudioPart[3]}`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: Number(newAudioPart[2]), part: Number(newAudioPart[3]), role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
     if (newAudioComplete) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Test ${newAudioComplete[2]} · Complete Listening`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: Number(newAudioComplete[2]), part: null, role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
-    if (audioVolume) {
-      const audio = audioDetails(item.path);
-      return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — ${audio.label}`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: audio.test, part: audio.part, role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
-    }
     const basename = baseName(item.path);
-    const category = item.path.startsWith("雅思听力资料/") ? "listening" : item.path.startsWith("雅思作文") ? "writing" : item.path === "IELTS16_体验版.pdf" ? "cambridge" : "guides";
-    return makeMaterial("ielts", repo, item, { title: ieltsNameMap.get(basename) || `IELTS ${category} material`, category, collection: category, volume });
+    const category = item.path.startsWith("listening/materials/") ? "listening" : item.path.startsWith("writing/") ? "writing" : item.path.startsWith("guides/") ? "guides" : "guides";
+    return makeMaterial("ielts", repo, item, { title: ieltsEnglishTitles.get(basename) || humanize(basename), category, collection: category, volume });
   }).sort((a, b) => (a.volume || 99) - (b.volume || 99) || a.title.localeCompare(b.title));
 }
 
