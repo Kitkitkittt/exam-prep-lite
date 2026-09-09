@@ -1,6 +1,6 @@
 # Exam Prep Archive
 
-A simple English material browser for IELTS, GRE, and GMAT. The GitHub Pages app stays small while PDFs, audio, datasets, and question banks are retrieved directly from dedicated GitHub repositories under the same account.
+A simple English material browser for IELTS, GRE, and GMAT. The GitHub Pages app combines files hosted in dedicated repositories with a curated registry of current official and licensed external sources.
 
 **Live site:** https://kitkitkittt.github.io/exam-prep-lite/
 
@@ -17,26 +17,31 @@ These are GitHub forks, so upstream history and ownership remain visible at the 
 
 ## Current catalog snapshot
 
-- 277 IELTS files, approximately 1.97 GB
-- 32 GRE files, approximately 158 MB
-- 2 GMAT question-bank files
+- 350 total resources: 311 GitHub-hosted files and 39 curated external sources
+- 301 IELTS resources, including the hosted archive and current official Cambridge/IELTS.org entries
+- 40 GRE resources, including official ETS practice, Quant review, POWERPREP, and video indexes
+- 9 GMAT resources, including official GMAC entries, question banks, and current free video courses
 - Cambridge IELTS volumes 1–21 are indexed in the interface
 - Complete book/audio files are currently present for Cambridge 4–18
-- Cambridge 1–3 and 19–21 are shown as unavailable because the inspected source repositories do not contain those book/audio files
+- Cambridge 19–21 contain verified official product and preview records but are not labelled as hosted
+- Cambridge 1–3 remain missing because neither hosted files nor curated external records are present
 
-The catalog never marks a volume available unless at least one real repository file exists. Add properly licensed files to the IELTS material repository, run the snapshot command, and deploy again to update coverage.
+The catalog distinguishes `hosted`, `public_official`, `licensed`, and `third_party_free` access. A downloadable official URL is not treated as permission to mirror it. Full commercial CAM19–21 payloads must not be committed without a written redistribution grant.
 
 ## Interface
 
 - IELTS, GRE, and GMAT switching
 - Compact category navigation
-- Cambridge 1–21 volume grid with hosted/missing indicators
-- Fast English-title search
+- Cambridge 21-to-1 volume grid with hosted/official/licensed/missing indicators
+- Fast search across titles, publishers, editions, skills, tests, parts, and formats
+- Resource-type and access filters
+- Cambridge Listening grouping by edition, test, and part
 - Direct PDF preview
 - Streaming audio player
 - Image, Markdown, text, CSV, and JSON preview
-- Direct raw-file and repository-file actions
-- Responsive single-column layout on smaller screens
+- Official/licensed resource detail views with direct source actions
+- Bookmarks, completion marks, recent resources, last-opened state, and deep links stored locally
+- Full-width mobile preview with a Back action
 
 No study files are copied into the GitHub Pages build. This is important because a published Pages site may not exceed 1 GB, while the indexed IELTS archive alone is larger than that.
 
@@ -49,15 +54,29 @@ npm install
 npm run dev
 ```
 
-## Refresh the material snapshot
+## Source registry and catalog refresh
 
-The committed `public/catalog.json` makes the deployed site fast and avoids consuming unauthenticated GitHub API requests in every visitor's browser.
+The curated registry lives in `sources/official.json`. It records source ownership, resource type, access state, mirroring policy, edition metadata, and verification date. The committed `public/catalog.json` merges that registry with the current GitHub repository trees, keeping visitor browsers independent of the GitHub API.
 
 ```bash
 npm run catalog
 ```
 
-The snapshot script reads the current public repository trees, translates the visible labels to English, and writes the catalog. It uses `GITHUB_TOKEN` when present but does not require one for these public repositories.
+The snapshot script reads the public repository trees, translates visible labels to English, normalizes hosted and external records, and writes the catalog. It uses `GITHUB_TOKEN` when present but does not require one for public repositories.
+
+Validate registry structure without network access:
+
+```bash
+npm run validate:sources
+```
+
+Run the live source-health report manually:
+
+```bash
+npm run check:sources
+```
+
+The weekly Source health workflow follows redirects, falls back to a ranged GET when HEAD is rejected, reports missing URLs, and treats automation-blocking HTTP 403 responses separately instead of deleting records.
 
 ## Test and build
 

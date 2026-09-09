@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+
+const sourceManifestUrl = new URL("../sources/official.json", import.meta.url);
 
 const repositories = {
   ielts: { owner: "Kitkitkittt", repo: "IELTS", branch: "master" },
@@ -47,6 +49,7 @@ function links(repo, path) {
 }
 
 function makeMaterial(exam, repo, item, details) {
+  const materialLinks = links(repo, item.path);
   return {
     id: createHash("sha1").update(`${exam}:${item.path}`).digest("hex").slice(0, 12),
     exam,
@@ -54,8 +57,19 @@ function makeMaterial(exam, repo, item, details) {
     size: item.size || 0,
     format: extension(item.path).toUpperCase(),
     kind: kindFor(item.path),
+    collection: details.category,
+    variant: null,
+    skill: null,
+    test: null,
+    part: null,
+    role: null,
+    publisher: `${repo.owner}/${repo.repo}`,
+    access: "hosted",
+    location: "github",
+    verifiedOn: null,
     ...details,
-    ...links(repo, item.path),
+    ...materialLinks,
+    sourceUrl: materialLinks.repositoryUrl,
   };
 }
 
@@ -90,7 +104,7 @@ function baseName(path) {
   return path.split("/").pop().replace(/\.[^.]+$/, "");
 }
 
-function audioLabel(path) {
+function audioDetails(path) {
   const basename = baseName(path);
   const testFromDirectory = path.match(/Test\s*([1-8])/i)?.[1];
   const patterns = [
@@ -101,11 +115,11 @@ function audioLabel(path) {
   ];
   for (const pattern of patterns) {
     const match = basename.match(pattern);
-    if (match) return `Test ${match[1]} · Part ${match[2]}`;
+    if (match) return { label: `Test ${match[1]} · Part ${match[2]}`, test: Number(match[1]), part: Number(match[2]) };
   }
   const part = basename.match(/(?:Part|Audio)[\s._-]*([1-5])/i)?.[1];
-  if (testFromDirectory && part) return `Test ${testFromDirectory} · Part ${part}`;
-  return basename.replace(/^\d+[\s._-]*/, "").replaceAll("_", " ").replaceAll(".", " · ");
+  if (testFromDirectory && part) return { label: `Test ${testFromDirectory} · Part ${part}`, test: Number(testFromDirectory), part: Number(part) };
+  return { label: basename.replace(/^\d+[\s._-]*/, "").replaceAll("_", " ").replaceAll(".", " · "), test: null, part: null };
 }
 
 function ieltsMaterials(tree, repo) {
@@ -116,11 +130,14 @@ function ieltsMaterials(tree, repo) {
     const book = item.path.match(/^剑桥雅思真题(\d+)\.pdf$/);
     const audioVolume = item.path.match(/^雅思真题音频\/(\d+)-剑桥雅思(\d+)\//);
     const volume = book ? Number(book[1]) : audioVolume ? Number(audioVolume[2]) : item.path === "IELTS16_体验版.pdf" ? 16 : null;
-    if (book) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", volume });
-    if (audioVolume) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — ${audioLabel(item.path)}`, category: "cambridge", volume });
+    if (book) return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — Practice book`, category: "cambridge", collection: "cambridge", volume, variant: "academic", role: "practice_book", publisher: "Cambridge University Press & Assessment" });
+    if (audioVolume) {
+      const audio = audioDetails(item.path);
+      return makeMaterial("ielts", repo, item, { title: `Cambridge IELTS ${volume} — ${audio.label}`, category: "cambridge", collection: "cambridge", volume, variant: "academic", skill: "listening", test: audio.test, part: audio.part, role: "listening_audio", publisher: "Cambridge University Press & Assessment" });
+    }
     const basename = baseName(item.path);
     const category = item.path.startsWith("雅思听力资料/") ? "listening" : item.path.startsWith("雅思作文") ? "writing" : item.path === "IELTS16_体验版.pdf" ? "cambridge" : "guides";
-    return makeMaterial("ielts", repo, item, { title: ieltsNameMap.get(basename) || `IELTS ${category} material`, category, volume });
+    return makeMaterial("ielts", repo, item, { title: ieltsNameMap.get(basename) || `IELTS ${category} material`, category, collection: category, volume });
   }).sort((a, b) => (a.volume || 99) - (b.volume || 99) || a.title.localeCompare(b.title));
 }
 
@@ -162,20 +179,127 @@ function gmatMaterials(tree, repo) {
   }));
 }
 
+function externalCategory(source) {
+  if (source.collection === "cambridge") return "cambridge";
+  if (source.exam === "ielts") return source.skill || "official";
+  if (source.exam === "gre") {
+    if (source.skill === "quant") return "quant";
+    if (source.collection === "lectures") return "lectures";
+    if (source.collection === "practice_tests") return "practice-tests";
+    return "official";
+  }
+  if (source.exam === "gmat") {
+    if (source.skill === "data_insights") return "data-insights";
+    if (source.skill === "quant" || source.skill === "verbal") return source.skill;
+    if (source.collection === "lectures") return "lectures";
+    return "official";
+  }
+  return source.collection;
+}
+
+function externalKind(resourceKind) {
+  if (resourceKind === "pdf") return "pdf";
+  if (resourceKind === "audio") return "audio";
+  if (["video", "video_index", "video_course"].includes(resourceKind)) return "video";
+  return "external";
+}
+
+function externalFormat(resourceKind) {
+  const labels = {
+    digital_pack: "DIGITAL PACK",
+    web_app: "WEB APP",
+    video_index: "VIDEO",
+    video_course: "VIDEO COURSE",
+    web: "WEB",
+    zip: "ZIP",
+    pdf: "PDF",
+    audio: "MP3",
+    digital_book: "DIGITAL BOOK",
+  };
+  return labels[resourceKind] || resourceKind.replaceAll("_", " ").toUpperCase();
+}
+
+function normalizeExternal(source, verifiedOn) {
+  return {
+    id: source.id,
+    exam: source.exam,
+    path: null,
+    size: 0,
+    format: externalFormat(source.resource_kind),
+    kind: externalKind(source.resource_kind),
+    title: source.title,
+    category: externalCategory(source),
+    collection: source.collection,
+    volume: source.edition ?? null,
+    variant: source.variant ?? null,
+    skill: source.skill ?? null,
+    test: source.test ?? null,
+    part: source.part ?? null,
+    role: source.role ?? source.resource_kind,
+    resourceKind: source.resource_kind,
+    publisher: source.publisher,
+    access: source.access,
+    location: "external",
+    url: source.url,
+    repositoryUrl: null,
+    sourceUrl: source.url,
+    year: source.year ?? null,
+    isbn: source.isbn ?? null,
+    notes: source.notes ?? null,
+    mirrorPolicy: source.mirror_policy,
+    verifiedOn,
+  };
+}
+
+const roleOrder = new Map([
+  ["digital_pack", 0],
+  ["digital_book", 0],
+  ["practice_book", 1],
+  ["excerpt", 2],
+  ["frontmatter", 2],
+  ["listening_audio", 3],
+]);
+
+function sortMaterials(left, right) {
+  if (left.exam !== right.exam) return left.exam.localeCompare(right.exam);
+  if ((left.volume ?? -1) !== (right.volume ?? -1)) return (right.volume ?? -1) - (left.volume ?? -1);
+  const roleDifference = (roleOrder.get(left.role) ?? 9) - (roleOrder.get(right.role) ?? 9);
+  if (roleDifference) return roleDifference;
+  if ((left.test ?? 0) !== (right.test ?? 0)) return (left.test ?? 0) - (right.test ?? 0);
+  if ((left.part ?? 0) !== (right.part ?? 0)) return (left.part ?? 0) - (right.part ?? 0);
+  return left.title.localeCompare(right.title);
+}
+
+const sourceManifest = JSON.parse(await readFile(sourceManifestUrl, "utf8"));
 const trees = Object.fromEntries(await Promise.all(Object.entries(repositories).map(async ([exam, repo]) => [exam, await treeFor(repo)])));
 const materials = [
   ...ieltsMaterials(trees.ielts, repositories.ielts),
   ...greMaterials(trees.gre, repositories.gre),
   ...gmatMaterials(trees.gmat, repositories.gmat),
-];
+  ...sourceManifest.sources.map((source) => normalizeExternal(source, sourceManifest.verified_on)),
+].sort(sortMaterials);
 const volumes = Array.from({ length: 21 }, (_, index) => {
   const volume = index + 1;
   const files = materials.filter((item) => item.exam === "ielts" && item.volume === volume);
-  return { volume, available: files.length > 0, files: files.length, bytes: files.reduce((sum, item) => sum + item.size, 0) };
+  const hostedFiles = files.filter((item) => item.access === "hosted");
+  const publicOfficial = files.filter((item) => item.access === "public_official");
+  const licensed = files.filter((item) => item.access === "licensed");
+  const status = hostedFiles.length ? "hosted" : publicOfficial.length ? "official" : licensed.length ? "licensed" : "missing";
+  return {
+    volume,
+    available: files.length > 0,
+    status,
+    files: files.length,
+    hostedFiles: hostedFiles.length,
+    externalFiles: files.length - hostedFiles.length,
+    bytes: hostedFiles.reduce((sum, item) => sum + item.size, 0),
+  };
 });
 
 const catalog = {
   generatedAt: new Date().toISOString(),
+  verifiedOn: sourceManifest.verified_on,
+  sourceRegistryTitle: sourceManifest.title,
   repositories,
   volumes,
   materials,
@@ -183,4 +307,4 @@ const catalog = {
 
 await mkdir(new URL("../public/", import.meta.url), { recursive: true });
 await writeFile(new URL("../public/catalog.json", import.meta.url), `${JSON.stringify(catalog, null, 2)}\n`);
-console.log(`Wrote ${materials.length} materials (${materials.filter((item) => item.exam === "ielts").length} IELTS, ${materials.filter((item) => item.exam === "gre").length} GRE, ${materials.filter((item) => item.exam === "gmat").length} GMAT).`);
+console.log(`Wrote ${materials.length} materials (${materials.filter((item) => item.exam === "ielts").length} IELTS, ${materials.filter((item) => item.exam === "gre").length} GRE, ${materials.filter((item) => item.exam === "gmat").length} GMAT; ${sourceManifest.sources.length} curated sources).`);
